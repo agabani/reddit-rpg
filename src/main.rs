@@ -1,5 +1,5 @@
 #![warn(clippy::pedantic)]
 
 fn main() {
-    println!("Hello, world!");
+    reddit_rpg::app::run();
 }
