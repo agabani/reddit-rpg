@@ -2,8 +2,12 @@
 
 pub mod app;
 
+mod camera;
+
 #[cfg(feature = "editor")]
 mod editor;
+
+mod sprite;
 
 mod window;
 
