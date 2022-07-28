@@ -1,13 +1,15 @@
 #![warn(clippy::pedantic)]
 
+mod animation;
+
 pub mod app;
 
 mod camera;
 
+mod character;
+
 #[cfg(feature = "editor")]
 mod editor;
-
-mod sprite;
 
 mod window;
 
