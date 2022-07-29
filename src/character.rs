@@ -10,7 +10,8 @@ impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
             .add_system(keyboard_input)
-            .add_system(apply_animation);
+            .add_system(apply_animation)
+            .add_system(apply_movement);
 
         #[cfg(feature = "editor")]
         {
@@ -92,9 +93,26 @@ impl AnimationState {
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn apply_animation(mut query: Query<(&AnimationState, &mut animation::AnimationIndex)>) {
     for (animation_state, mut animation_index) in query.iter_mut() {
         animation_state.apply_index(&mut animation_index);
+    }
+}
+
+#[allow(clippy::needless_pass_by_value)]
+fn apply_movement(time: Res<Time>, mut query: Query<(&AnimationState, &mut Transform)>) {
+    let distance = 150.0 * time.delta_seconds();
+
+    for (animation_state, mut transform) in query.iter_mut() {
+        if let AnimationAction::Walk(direction) = &animation_state.action {
+            match direction {
+                AnimationDirection::Down => transform.translation.y -= distance,
+                AnimationDirection::Left => transform.translation.x -= distance,
+                AnimationDirection::Right => transform.translation.x += distance,
+                AnimationDirection::Up => transform.translation.y += distance,
+            }
+        }
     }
 }
 
