@@ -144,7 +144,7 @@ fn setup(
     let animation_index = animation_state.new_index();
     let animation_timer = animation::AnimationTimer::new(Timer::from_seconds(0.2, true));
 
-    let texture_handle = asset_server.load("characters/04_48x48.png");
+    let texture_handle = asset_server.load("character/04_48x48.png");
     let texture_atlas = TextureAtlas::from_grid_with_padding(
         texture_handle,
         Vec2::new(48.0 - PADDING, 96.0 - PADDING),
@@ -157,7 +157,6 @@ fn setup(
     commands
         .spawn_bundle(SpriteSheetBundle {
             texture_atlas: texture_atlas_handle,
-            transform: Transform::from_scale(Vec3::splat(12.0)),
             sprite: TextureAtlasSprite {
                 index: animation_index.start(),
                 ..Default::default()

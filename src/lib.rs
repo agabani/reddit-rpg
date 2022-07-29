@@ -11,6 +11,8 @@ mod character;
 #[cfg(feature = "editor")]
 mod editor;
 
+mod mirror;
+
 mod window;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
