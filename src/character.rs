@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::animation;
+use crate::{animation, player};
 
 const PADDING: f32 = 0.1;
 
@@ -10,7 +10,8 @@ impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
             .add_system(keyboard_input)
-            .add_system(apply_animation);
+            .add_system(apply_animation)
+            .add_system(apply_movement);
 
         #[cfg(feature = "editor")]
         {
@@ -92,6 +93,7 @@ impl AnimationState {
     }
 }
 
+#[allow(clippy::needless_pass_by_value)]
 fn apply_animation(mut query: Query<(&AnimationState, &mut animation::AnimationIndex)>) {
     for (animation_state, mut animation_index) in query.iter_mut() {
         animation_state.apply_index(&mut animation_index);
@@ -99,9 +101,26 @@ fn apply_animation(mut query: Query<(&AnimationState, &mut animation::AnimationI
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn keyboard_input(keys: Res<Input<KeyCode>>, mut query: Query<&mut AnimationState>) {
-    for mut animation_state in query.iter_mut() {
+fn apply_movement(time: Res<Time>, mut query: Query<(&AnimationState, &mut Transform)>) {
+    let distance = 150.0 * time.delta_seconds();
+
+    for (animation_state, mut transform) in query.iter_mut() {
+        if let AnimationAction::Walk(direction) = &animation_state.action {
+            match direction {
+                AnimationDirection::Down => transform.translation.y -= distance,
+                AnimationDirection::Left => transform.translation.x -= distance,
+                AnimationDirection::Right => transform.translation.x += distance,
+                AnimationDirection::Up => transform.translation.y += distance,
+            }
+        }
+    }
+}
+
+#[allow(clippy::needless_pass_by_value)]
+fn keyboard_input(mut query: Query<(&player::Player, &mut AnimationState)>) {
+    for (player, mut animation_state) in query.iter_mut() {
         let mut action = None;
+        let keys = player.keys();
 
         if keys.just_pressed(KeyCode::W) {
             action = Some(AnimationAction::Walk(AnimationDirection::Up));
@@ -144,6 +163,8 @@ fn setup(
     let animation_index = animation_state.new_index();
     let animation_timer = animation::AnimationTimer::new(Timer::from_seconds(0.2, true));
 
+    let player = player::Player::default();
+
     let texture_handle = asset_server.load("character/04_48x48.png");
     let texture_atlas = TextureAtlas::from_grid_with_padding(
         texture_handle,
@@ -166,5 +187,6 @@ fn setup(
         .insert(Name::new("character_04"))
         .insert(animation_index)
         .insert(animation_state)
-        .insert(animation_timer);
+        .insert(animation_timer)
+        .insert(player);
 }

@@ -13,6 +13,8 @@ mod editor;
 
 mod mirror;
 
+mod player;
+
 mod window;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
