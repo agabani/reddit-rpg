@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{animation, player};
+use crate::{animation, faces, player, walks};
 
 const PADDING: f32 = 0.1;
 
@@ -10,145 +10,75 @@ impl bevy::prelude::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app.add_startup_system(setup)
             .add_system(keyboard_input)
-            .add_system(apply_animation)
-            .add_system(apply_movement);
+            .add_system(animate);
 
         #[cfg(feature = "editor")]
         {
             use bevy_inspector_egui::RegisterInspectable;
-            app.register_inspectable::<AnimationState>();
+            app.register_inspectable::<Character>();
         }
     }
 }
 
-#[derive(Default, Component)]
+#[derive(Component)]
 #[cfg_attr(feature = "editor", derive(bevy_inspector_egui::Inspectable))]
-struct AnimationState {
-    action: AnimationAction,
-}
-
-#[derive(Clone, Component)]
-#[cfg_attr(feature = "editor", derive(bevy_inspector_egui::Inspectable))]
-enum AnimationAction {
-    Stand(AnimationDirection),
-    Walk(AnimationDirection),
-}
-
-#[derive(Clone, PartialEq, Eq, Component)]
-#[cfg_attr(feature = "editor", derive(bevy_inspector_egui::Inspectable))]
-enum AnimationDirection {
-    Down,
-    Left,
-    Right,
-    Up,
-}
-
-impl std::default::Default for AnimationAction {
-    fn default() -> Self {
-        AnimationAction::Stand(AnimationDirection::default())
-    }
-}
-
-impl std::default::Default for AnimationDirection {
-    fn default() -> Self {
-        AnimationDirection::Down
-    }
-}
-
-impl AnimationState {
-    fn new_index(&self) -> animation::AnimationIndex {
-        let mut index = animation::AnimationIndex::new(0, 0);
-        self.apply_index(&mut index);
-        index
-    }
-
-    fn apply_index(&self, animation_index: &mut animation::AnimationIndex) {
-        match &self.action {
-            AnimationAction::Stand(direction) => match direction {
-                AnimationDirection::Down => animation_index.change(74, 6),
-                AnimationDirection::Left => animation_index.change(68, 6),
-                AnimationDirection::Right => animation_index.change(56, 6),
-                AnimationDirection::Up => animation_index.change(62, 6),
-            },
-            AnimationAction::Walk(direction) => match direction {
-                AnimationDirection::Down => animation_index.change(130, 6),
-                AnimationDirection::Left => animation_index.change(124, 6),
-                AnimationDirection::Right => animation_index.change(112, 6),
-                AnimationDirection::Up => animation_index.change(118, 6),
-            },
-        }
-    }
-
-    fn update_action(&mut self, action: AnimationAction) -> &Self {
-        match (&self.action, &action) {
-            (AnimationAction::Stand(_), AnimationAction::Stand(_)) => {}
-            (AnimationAction::Walk(a), AnimationAction::Stand(b)) => {
-                if a == b {
-                    self.action = action;
-                }
-            }
-            _ => self.action = action,
-        };
-        self
-    }
-}
+pub(crate) struct Character;
 
 #[allow(clippy::needless_pass_by_value)]
-fn apply_animation(mut query: Query<(&AnimationState, &mut animation::AnimationIndex)>) {
-    for (animation_state, mut animation_index) in query.iter_mut() {
-        animation_state.apply_index(&mut animation_index);
-    }
-}
-
-#[allow(clippy::needless_pass_by_value)]
-fn apply_movement(time: Res<Time>, mut query: Query<(&AnimationState, &mut Transform)>) {
-    let distance = 150.0 * time.delta_seconds();
-
-    for (animation_state, mut transform) in query.iter_mut() {
-        if let AnimationAction::Walk(direction) = &animation_state.action {
-            match direction {
-                AnimationDirection::Down => transform.translation.y -= distance,
-                AnimationDirection::Left => transform.translation.x -= distance,
-                AnimationDirection::Right => transform.translation.x += distance,
-                AnimationDirection::Up => transform.translation.y += distance,
-            }
+fn animate(
+    mut query: Query<(
+        &Character,
+        &faces::Faces,
+        &walks::Walks,
+        &mut animation::AnimationIndex,
+    )>,
+) {
+    for (_, faces, walks, mut animation_index) in query.iter_mut() {
+        match (faces.direction, walks.walking) {
+            (faces::Direction::Down, true) => animation_index.change(130, 6),
+            (faces::Direction::Down, false) => animation_index.change(74, 6),
+            (faces::Direction::Left, true) => animation_index.change(124, 6),
+            (faces::Direction::Left, false) => animation_index.change(68, 6),
+            (faces::Direction::Right, true) => animation_index.change(112, 6),
+            (faces::Direction::Right, false) => animation_index.change(56, 6),
+            (faces::Direction::Up, true) => animation_index.change(118, 6),
+            (faces::Direction::Up, false) => animation_index.change(62, 6),
         }
     }
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn keyboard_input(mut query: Query<(&player::Player, &mut AnimationState)>) {
-    for (player, mut animation_state) in query.iter_mut() {
-        let mut action = None;
+fn keyboard_input(mut query: Query<(&player::Player, &mut faces::Faces, &mut walks::Walks)>) {
+    for (player, mut faces, mut walks) in query.iter_mut() {
         let keys = player.keys();
 
         if keys.just_pressed(KeyCode::W) {
-            action = Some(AnimationAction::Walk(AnimationDirection::Up));
+            faces.direction = faces::Direction::Up;
+            walks.walking = true;
         }
-        if keys.just_released(KeyCode::W) {
-            action = Some(AnimationAction::Stand(AnimationDirection::Up));
+        if keys.just_released(KeyCode::W) && faces.direction == faces::Direction::Up {
+            walks.walking = false;
         }
         if keys.just_pressed(KeyCode::A) {
-            action = Some(AnimationAction::Walk(AnimationDirection::Left));
+            faces.direction = faces::Direction::Left;
+            walks.walking = true;
         }
-        if keys.just_released(KeyCode::A) {
-            action = Some(AnimationAction::Stand(AnimationDirection::Left));
+        if keys.just_released(KeyCode::A) && faces.direction == faces::Direction::Left {
+            walks.walking = false;
         }
         if keys.just_pressed(KeyCode::S) {
-            action = Some(AnimationAction::Walk(AnimationDirection::Down));
+            faces.direction = faces::Direction::Down;
+            walks.walking = true;
         }
-        if keys.just_released(KeyCode::S) {
-            action = Some(AnimationAction::Stand(AnimationDirection::Down));
+        if keys.just_released(KeyCode::S) && faces.direction == faces::Direction::Down {
+            walks.walking = false;
         }
         if keys.just_pressed(KeyCode::D) {
-            action = Some(AnimationAction::Walk(AnimationDirection::Right));
+            faces.direction = faces::Direction::Right;
+            walks.walking = true;
         }
-        if keys.just_released(KeyCode::D) {
-            action = Some(AnimationAction::Stand(AnimationDirection::Right));
-        }
-
-        if let Some(action) = action {
-            animation_state.update_action(action);
+        if keys.just_released(KeyCode::D) && faces.direction == faces::Direction::Right {
+            walks.walking = false;
         }
     }
 }
@@ -159,8 +89,7 @@ fn setup(
     asset_server: Res<AssetServer>,
     mut texture_atlases: ResMut<Assets<TextureAtlas>>,
 ) {
-    let animation_state = AnimationState::default();
-    let animation_index = animation_state.new_index();
+    let animation_index = animation::AnimationIndex::new(74, 6);
     let animation_timer = animation::AnimationTimer::new(Timer::from_seconds(0.2, true));
 
     let player = player::Player::default();
@@ -185,8 +114,15 @@ fn setup(
             ..Default::default()
         })
         .insert(Name::new("character_04"))
+        .insert(Character)
         .insert(animation_index)
-        .insert(animation_state)
         .insert(animation_timer)
-        .insert(player);
+        .insert(player)
+        .insert(faces::Faces {
+            direction: faces::Direction::Down,
+        })
+        .insert(walks::Walks {
+            speed: 150.0,
+            walking: false,
+        });
 }
