@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 use crate::faces;
 
@@ -19,21 +20,19 @@ impl bevy::prelude::Plugin for Plugin {
 #[derive(Component)]
 #[cfg_attr(feature = "editor", derive(bevy_inspector_egui::Inspectable))]
 pub(crate) struct Walks {
-    pub(crate) speed: f32,
+    pub(crate) strength: f32,
     pub(crate) walking: bool,
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn walk(time: Res<Time>, mut query: Query<(&Walks, &faces::Faces, &mut Transform)>) {
-    for (walks, faces, mut transform) in query.iter_mut() {
+fn walk(mut query: Query<(&Walks, &faces::Faces, &mut ExternalImpulse)>) {
+    for (walks, faces, mut impulse) in query.iter_mut() {
         if walks.walking {
-            let distance = walks.speed * time.delta_seconds();
-
             match faces.direction {
-                faces::Direction::Down => transform.translation.y -= distance,
-                faces::Direction::Left => transform.translation.x -= distance,
-                faces::Direction::Right => transform.translation.x += distance,
-                faces::Direction::Up => transform.translation.y += distance,
+                faces::Direction::Down => impulse.impulse = Vec2::new(0.0, -walks.strength),
+                faces::Direction::Left => impulse.impulse = Vec2::new(-walks.strength, 0.0),
+                faces::Direction::Right => impulse.impulse = Vec2::new(walks.strength, 0.0),
+                faces::Direction::Up => impulse.impulse = Vec2::new(0.0, walks.strength),
             }
         }
     }
