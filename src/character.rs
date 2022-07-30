@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 use crate::{animation, faces, player, walks, z_index};
 
@@ -104,26 +105,52 @@ fn setup(
     );
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
-    commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle,
-            sprite: TextureAtlasSprite {
-                index: animation_index.start(),
-                ..Default::default()
-            },
+    let mut entity = commands.spawn_bundle(SpriteSheetBundle {
+        texture_atlas: texture_atlas_handle,
+        sprite: TextureAtlasSprite {
+            index: animation_index.start(),
             ..Default::default()
-        })
-        .insert(Name::new("character_04"))
-        .insert(Character)
+        },
+        ..Default::default()
+    });
+
+    // identity
+    entity.insert(Name::new("character_04")).insert(Character);
+
+    // animation
+    entity
         .insert(animation_index)
         .insert(animation_timer)
-        .insert(player)
         .insert(faces::Faces {
             direction: faces::Direction::Down,
         })
         .insert(walks::Walks {
-            speed: 150.0,
+            strength: 24.0,
             walking: false,
         })
         .insert(z_index::ZIndex);
+
+    // control
+    entity.insert(player);
+
+    // physics
+    entity
+        .insert(RigidBody::Dynamic)
+        .insert(GravityScale(0.0))
+        .insert(LockedAxes::ROTATION_LOCKED)
+        .insert(ExternalImpulse {
+            impulse: Vec2::ZERO,
+            torque_impulse: 0.0,
+        })
+        .insert(Damping {
+            linear_damping: 18.0,
+            angular_damping: 1.0,
+        })
+        .with_children(|children| {
+            children
+                .spawn()
+                .insert(Name::new("solid collider"))
+                .insert(Collider::ball(24.0))
+                .insert_bundle(TransformBundle::from(Transform::from_xyz(0.0, -24.0, 0.0)));
+        });
 }

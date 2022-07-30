@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_rapier2d::prelude::*;
 
 use crate::{animation, z_index};
 
@@ -31,17 +32,30 @@ fn setup(
     );
     let texture_atlas_handle = texture_atlases.add(texture_atlas);
 
-    commands
-        .spawn_bundle(SpriteSheetBundle {
-            texture_atlas: texture_atlas_handle,
-            sprite: TextureAtlasSprite {
-                ..Default::default()
-            },
-            transform: Transform::from_xyz(48.0, 0.0, 0.0),
+    let mut entity = commands.spawn_bundle(SpriteSheetBundle {
+        texture_atlas: texture_atlas_handle,
+        sprite: TextureAtlasSprite {
             ..Default::default()
-        })
-        .insert(Name::new("mirror"))
+        },
+        transform: Transform::from_xyz(48.0, 0.0, 0.0),
+        ..Default::default()
+    });
+
+    // identity
+    entity.insert(Name::new("mirror"));
+
+    // animation
+    entity
         .insert(animation_index)
         .insert(animation_timer)
         .insert(z_index::ZIndex);
+
+    // physics
+    entity.insert(RigidBody::Fixed).with_children(|children| {
+        children
+            .spawn()
+            .insert(Name::new("solid collider"))
+            .insert(Collider::cuboid(24.0, 24.0))
+            .insert_bundle(TransformBundle::from(Transform::from_xyz(0.0, -24.0, 0.0)));
+    });
 }

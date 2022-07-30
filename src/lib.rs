@@ -15,6 +15,8 @@ mod faces;
 
 mod mirror;
 
+mod physics;
+
 mod player;
 
 mod walks;
