@@ -3,6 +3,7 @@ use bevy_rapier2d::prelude::*;
 
 use crate::{animation, faces, player, walks, z_index};
 
+const DIMENSION: f32 = 48.0;
 const PADDING: f32 = 0.1;
 
 pub(crate) struct Plugin;
@@ -98,7 +99,7 @@ fn setup(
     let texture_handle = asset_server.load("character/04_48x48.png");
     let texture_atlas = TextureAtlas::from_grid_with_padding(
         texture_handle,
-        Vec2::new(48.0 - PADDING, 96.0 - PADDING),
+        Vec2::new(DIMENSION - PADDING, DIMENSION * 2.0 - PADDING),
         56,
         20,
         Vec2::new(PADDING, PADDING),
@@ -127,8 +128,10 @@ fn setup(
         .insert(walks::Walks {
             strength: 24.0,
             walking: false,
-        })
-        .insert(z_index::ZIndex);
+        });
+
+    // visibility
+    entity.insert(z_index::ZIndex);
 
     // control
     entity.insert(player);
