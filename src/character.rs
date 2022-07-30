@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::{animation, faces, player, walks};
+use crate::{animation, faces, player, walks, z_index};
 
 const PADDING: f32 = 0.1;
 
@@ -124,5 +124,6 @@ fn setup(
         .insert(walks::Walks {
             speed: 150.0,
             walking: false,
-        });
+        })
+        .insert(z_index::ZIndex);
 }

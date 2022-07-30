@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::animation;
+use crate::{animation, z_index};
 
 const PADDING: f32 = 0.1;
 
@@ -42,5 +42,6 @@ fn setup(
         })
         .insert(Name::new("mirror"))
         .insert(animation_index)
-        .insert(animation_timer);
+        .insert(animation_timer)
+        .insert(z_index::ZIndex);
 }
