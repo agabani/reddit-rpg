@@ -11,9 +11,13 @@ mod character;
 #[cfg(feature = "editor")]
 mod editor;
 
+mod faces;
+
 mod mirror;
 
 mod player;
+
+mod walks;
 
 mod window;
 
