@@ -55,6 +55,10 @@ impl AnimationTimer {
     pub(crate) fn new(timer: Timer) -> AnimationTimer {
         AnimationTimer(timer)
     }
+
+    pub(crate) fn duration(&self) -> f32 {
+        self.0.duration().as_secs_f32()
+    }
 }
 
 #[allow(clippy::needless_pass_by_value)]

@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
-use crate::{animation, camera, character, faces, mirror, physics, player, walks, window, z_index};
+use crate::{
+    animation, camera, character, faces, mirror, physics, player, runs, walks, window, z_index,
+};
 
 pub fn run() {
     let mut app = App::new();
@@ -22,6 +24,7 @@ pub fn run() {
         .add_plugin(physics::Plugin)
         .add_plugin(player::Plugin)
         .add_plugin(walks::Plugin)
+        .add_plugin(runs::Plugin)
         .add_plugin(z_index::Plugin);
 
     app.run();
