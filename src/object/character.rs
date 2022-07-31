@@ -1,7 +1,12 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{animation, faces, player, runs, walks, z_index};
+use crate::{
+    animation,
+    movement::{faces, runs, walks},
+    player,
+    visibility::z_index,
+};
 
 const DIMENSION: f32 = 48.0;
 const PADDING: f32 = 0.1;

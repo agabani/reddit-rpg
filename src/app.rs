@@ -1,7 +1,12 @@
 use bevy::prelude::*;
 
 use crate::{
-    animation, camera, character, faces, mirror, physics, player, runs, walks, window, z_index,
+    animation, camera,
+    movement::{faces, runs, walks},
+    object::{character, mirror},
+    physics, player,
+    visibility::z_index,
+    window,
 };
 
 pub fn run() {
