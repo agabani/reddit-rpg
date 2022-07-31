@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::{animation, faces, player, walks, z_index};
+use crate::{animation, faces, player, runs, walks, z_index};
 
 const DIMENSION: f32 = 48.0;
 const PADDING: f32 = 0.1;
@@ -32,11 +32,13 @@ fn animate(
         &Character,
         &faces::Faces,
         &walks::Walks,
+        &runs::Runs,
         &mut animation::AnimationIndex,
+        &mut animation::AnimationTimer,
     )>,
 ) {
-    for (_, faces, walks, mut animation_index) in query.iter_mut() {
-        match (faces.direction, walks.walking) {
+    for (_, faces, walks, runs, mut animation_index, mut animation_timer) in query.iter_mut() {
+        match (faces.direction, walks.walking || runs.running) {
             (faces::Direction::Down, true) => animation_index.change(130, 6),
             (faces::Direction::Down, false) => animation_index.change(74, 6),
             (faces::Direction::Left, true) => animation_index.change(124, 6),
@@ -46,41 +48,85 @@ fn animate(
             (faces::Direction::Up, true) => animation_index.change(118, 6),
             (faces::Direction::Up, false) => animation_index.change(62, 6),
         }
+
+        if runs.running && (animation_timer.duration() - 0.1).abs() > f32::EPSILON {
+            *animation_timer = animation::AnimationTimer::new(Timer::from_seconds(0.1, true));
+        }
+        if !runs.running && (animation_timer.duration() - 0.2).abs() > f32::EPSILON {
+            *animation_timer = animation::AnimationTimer::new(Timer::from_seconds(0.2, true));
+        }
     }
 }
 
 #[allow(clippy::needless_pass_by_value)]
-fn keyboard_input(mut query: Query<(&player::Player, &mut faces::Faces, &mut walks::Walks)>) {
-    for (player, mut faces, mut walks) in query.iter_mut() {
+fn keyboard_input(
+    mut query: Query<(
+        &player::Player,
+        &mut faces::Faces,
+        &mut walks::Walks,
+        &mut runs::Runs,
+    )>,
+) {
+    for (player, mut faces, mut walks, mut runs) in query.iter_mut() {
         let keys = player.keys();
 
+        // pressed directional
         if keys.just_pressed(KeyCode::W) {
             faces.direction = faces::Direction::Up;
-            walks.walking = true;
-        }
-        if keys.just_released(KeyCode::W) && faces.direction == faces::Direction::Up {
-            walks.walking = false;
         }
         if keys.just_pressed(KeyCode::A) {
             faces.direction = faces::Direction::Left;
-            walks.walking = true;
-        }
-        if keys.just_released(KeyCode::A) && faces.direction == faces::Direction::Left {
-            walks.walking = false;
         }
         if keys.just_pressed(KeyCode::S) {
             faces.direction = faces::Direction::Down;
-            walks.walking = true;
-        }
-        if keys.just_released(KeyCode::S) && faces.direction == faces::Direction::Down {
-            walks.walking = false;
         }
         if keys.just_pressed(KeyCode::D) {
             faces.direction = faces::Direction::Right;
-            walks.walking = true;
+        }
+
+        // pressed directional
+        if keys.any_just_pressed([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D]) {
+            if keys.pressed(KeyCode::LShift) {
+                runs.running = true;
+                walks.walking = false;
+            } else {
+                runs.running = false;
+                walks.walking = true;
+            }
+        }
+
+        // released directional
+        if keys.just_released(KeyCode::W) && faces.direction == faces::Direction::Up {
+            runs.running = false;
+            walks.walking = false;
+        }
+        if keys.just_released(KeyCode::A) && faces.direction == faces::Direction::Left {
+            runs.running = false;
+            walks.walking = false;
+        }
+        if keys.just_released(KeyCode::S) && faces.direction == faces::Direction::Down {
+            runs.running = false;
+            walks.walking = false;
         }
         if keys.just_released(KeyCode::D) && faces.direction == faces::Direction::Right {
+            runs.running = false;
             walks.walking = false;
+        }
+
+        // pressed LShift
+        if keys.just_pressed(KeyCode::LShift)
+            && keys.any_pressed([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D])
+        {
+            runs.running = true;
+            walks.walking = false;
+        }
+
+        // released LShift
+        if keys.just_released(KeyCode::LShift)
+            && keys.any_pressed([KeyCode::W, KeyCode::A, KeyCode::S, KeyCode::D])
+        {
+            runs.running = false;
+            walks.walking = true;
         }
     }
 }
@@ -124,6 +170,10 @@ fn setup(
         .insert(animation_timer)
         .insert(faces::Faces {
             direction: faces::Direction::Down,
+        })
+        .insert(runs::Runs {
+            strength: 48.0,
+            running: false,
         })
         .insert(walks::Walks {
             strength: 24.0,

@@ -19,6 +19,8 @@ mod physics;
 
 mod player;
 
+mod runs;
+
 mod walks;
 
 mod window;
