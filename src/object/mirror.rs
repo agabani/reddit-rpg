@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_rapier2d::prelude::*;
 
-use crate::z_index;
+use crate::visibility::z_index;
 
 const DIMENSION: f32 = 48.0;
 const PADDING: f32 = 0.1;

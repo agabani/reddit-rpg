@@ -1,31 +1,16 @@
 #![warn(clippy::pedantic)]
 
 mod animation;
-
 pub mod app;
-
 mod camera;
-
-mod character;
-
 #[cfg(feature = "editor")]
 mod editor;
-
-mod faces;
-
-mod mirror;
-
+mod movement;
+mod object;
 mod physics;
-
 mod player;
-
-mod runs;
-
-mod walks;
-
+mod visibility;
 mod window;
-
-mod z_index;
 
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
 
