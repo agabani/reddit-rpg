@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::{
     animation, camera,
     movement::{faces, runs, walks},
-    object::{character, mirror},
+    object::{character, floor, mirror},
     physics, player,
     visibility::z_index,
     window,
@@ -25,6 +25,7 @@ pub fn run() {
         .add_plugin(camera::Plugin)
         .add_plugin(character::Plugin)
         .add_plugin(faces::Plugin)
+        .add_plugin(floor::Plugin)
         .add_plugin(mirror::Plugin)
         .add_plugin(physics::Plugin)
         .add_plugin(player::Plugin)

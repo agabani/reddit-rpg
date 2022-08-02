@@ -118,7 +118,7 @@ fn spawn(
         entity.insert(ReflectionStrengths([false; MAX_REFLECTION_STRENGTH]));
 
         // visibility
-        entity.insert(z_index::ZIndex);
+        entity.insert(z_index::ZIndex::new(5.0));
 
         // physics
         entity.insert(RigidBody::Fixed).with_children(|children| {

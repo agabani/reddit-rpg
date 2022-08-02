@@ -186,7 +186,7 @@ fn setup(
         });
 
     // visibility
-    entity.insert(z_index::ZIndex);
+    entity.insert(z_index::ZIndex::new(5.0));
 
     // control
     entity.insert(player);
